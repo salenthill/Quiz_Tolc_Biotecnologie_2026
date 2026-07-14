@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Quiz BIOTECNOLOGIE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #080f0c;
+            --bg-card: #111d18;
+            --bg-card-alt: #162520;
+            --primary: #34d399;
+            --primary-dim: rgba(52,211,153,0.12);
+            --accent: #e5a930;
+            --accent-dim: rgba(229,169,48,0.12);
+            --text: #e4ece7;
+            --text-muted: #6e8a7d;
+            --correct: #22c55e;
+            --correct-bg: rgba(34,197,94,0.07);
+            --correct-border: rgba(34,197,94,0.35);
+            --wrong: #f43f5e;
+            --wrong-bg: rgba(244,63,94,0.07);
+            --wrong-border: rgba(244,63,94,0.35);
+            --border: #1a2e25;
+            --border-light: #244035;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 15% 30%, rgba(52,211,153,0.05) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 70%, rgba(229,169,48,0.035) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 100%, rgba(52,211,153,0.03) 0%, transparent 40%);
+            animation: bgPulse 18s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes bgPulse {
+            0% { opacity: 1; transform: scale(1) translateY(0); }
+            100% { opacity: 0.6; transform: scale(1.08) translateY(-20px); }
+        }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+        /* Schermate */
+        .screen { position: relative; z-index: 1; display: none; }
+        .screen.active { display: flex; }
+
+        /* Setup */
+        #setup-screen {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: calc(var(--safe-top) + 2rem) 1rem calc(var(--safe-bottom) + 2rem);
+        }
+        .setup-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 560px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .setup-card .logo-icon {
+            width: 56px; height: 56px;
+            background: var(--primary-dim);
+            border: 1px solid var(--correct-border);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.25rem;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        /* Lista / Select */
+        .list-box {
+            width: 100%;
+            height: 260px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.925rem;
+            padding: 0.5rem;
+            outline: none;
+            overflow-y: auto;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .list-box:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+        .list-box option {
+            padding: 0.55rem 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .list-box option:hover { background: var(--bg-card-alt); }
+        .list-box option:checked { background: var(--primary-dim); color: var(--primary); }
+        .list-box optgroup {
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            padding: 0.5rem 0.75rem 0.15rem;
+        }
+
+        /* Numero domande */
+        .num-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1rem;
+            padding: 0.7rem 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .num-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+
+        /* Bottone primario */
+        .btn-primary {
+            width: 100%;
+            padding: 0.85rem 1.5rem;
+            background: var(--primary);
+            color: #080f0c;
+            font-family: 'Source Sans 3', sans-serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+        }
+        .btn-primary:hover { background: #4ade80; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(52,211,153,0.25); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .btn-secondary {
+            padding: 0.7rem 1.5rem;
+            background: transparent;
+            color: var(--primary);
+            font-family: 'Source Sans 3', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { background: var(--primary-dim); border-color: var(--primary); }
+
+        /* Quiz */
+        #quiz-screen {
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: calc(var(--safe-top) + 1.5rem) 1rem calc(var(--safe-bottom) + 3rem);
+        }
+        .quiz-container { width: 100%; max-width: 700px; }
+        .progress-track {
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #4ade80);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+            position: relative;
+        }
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0;
+            width: 40px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25));
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+        @keyframes shimmer {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        .question-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 2rem 1.75rem;
+            margin-top: 1rem;
+        }
+        .question-area-badge {
+            display: inline-block;
+            padding: 0.25rem 0.7rem;
+            background: var(--accent-dim);
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 600;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            letter-spacing: 0.02em;
+            max-width: 100%;
+            word-break: break-word;
+        }
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        /* Opzioni risposta */
+        .options-list { margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.65rem; }
+        .option-btn {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            width: 100%;
+            text-align: left;
+            padding: 1rem 1.15rem;
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1rem;
+            line-height: 1.5;
+            cursor: pointer;
+            transition: all 0.18s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .option-btn:hover:not(.locked) {
+            border-color: var(--border-light);
+            background: var(--bg-card-alt);
+        }
+        .option-btn.selected:not(.locked) {
+            border-color: var(--primary);
+            background: var(--primary-dim);
+        }
+        .option-btn .opt-letter {
+            flex-shrink: 0;
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            background: var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            transition: all 0.18s;
+        }
+        .option-btn.selected:not(.locked) .opt-letter {
+            background: var(--primary);
+            color: #080f0c;
+        }
+        .option-btn.locked { cursor: default; }
+        .option-btn.correct-answer {
+            border-color: var(--correct-border) !important;
+            background: var(--correct-bg) !important;
+        }
+        .option-btn.correct-answer .opt-letter {
+            background: var(--correct) !important;
+            color: #fff !important;
+        }
+        .option-btn.wrong-selected {
+            border-color: var(--wrong-border) !important;
+            background: var(--wrong-bg) !important;
+        }
+        .option-btn.wrong-selected .opt-letter {
+            background: var(--wrong) !important;
+            color: #fff !important;
+        }
+        .option-btn.dimmed { opacity: 0.45; }
+
+        /* Feedback */
+        .feedback-box {
+            margin-top: 1.25rem;
+            border-radius: 12px;
+            padding: 1.25rem 1.35rem;
+            animation: slideDown 0.35s ease;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .feedback-box.correct {
+            background: var(--correct-bg);
+            border: 1px solid var(--correct-border);
+        }
+        .feedback-box.wrong {
+            background: var(--wrong-bg);
+            border: 1px solid var(--wrong-border);
+        }
+        .feedback-title {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-weight: 700; font-size: 1.05rem;
+            margin-bottom: 0.65rem;
+        }
+        .feedback-box.correct .feedback-title { color: var(--correct); }
+        .feedback-box.wrong .feedback-title { color: var(--wrong); }
+        .spiegazione-box {
+            margin-top: 0.85rem;
+            padding: 1rem 1.15rem;
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            font-size: 0.95rem;
+            line-height: 1.65;
+            color: #c5d4cb;
+        }
+        .spiegazione-label {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.35rem;
+        }
+
+        /* Risultati */
+        #results-screen {
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: calc(var(--safe-top) + 2rem) 1rem calc(var(--safe-bottom) + 3rem);
+        }
+        .results-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+        .score-ring { margin: 0 auto 1.25rem; }
+        .score-ring circle { transition: stroke-dashoffset 1.2s ease; }
+        .review-item {
+            text-align: left;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.15rem 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .review-item.was-correct { border-left: 3px solid var(--correct); }
+        .review-item.was-wrong { border-left: 3px solid var(--wrong); }
+        .review-q-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.55;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+        }
+        .review-opt-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            padding: 0.45rem 0.55rem;
+            border-radius: 7px;
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+        .review-opt-row.rev-correct {
+            background: var(--correct-bg);
+            color: var(--correct);
+            font-weight: 600;
+        }
+        .review-opt-row.rev-wrong {
+            background: var(--wrong-bg);
+            color: var(--wrong);
+            font-weight: 600;
+        }
+        .review-opt-letter {
+            flex-shrink: 0;
+            width: 24px; height: 24px;
+            border-radius: 6px;
+            background: var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .review-opt-row.rev-correct .review-opt-letter {
+            background: var(--correct);
+            color: #fff;
+        }
+        .review-opt-row.rev-wrong .review-opt-letter {
+            background: var(--wrong);
+            color: #fff;
+        }
+        .review-status-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .review-status-icon.is-correct { color: var(--correct); }
+        .review-status-icon.is-wrong { color: var(--wrong); }
+
+        /* Scrollbar personalizzata */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* Responsivo tablet */
+        @media (max-width: 640px) {
+            .setup-card { padding: 1.75rem 1.25rem; }
+            .question-card { padding: 1.5rem 1.25rem; }
+            .question-text { font-size: 1.08rem; }
+            .list-box { height: 220px; font-size: 0.85rem; }
+        }
+
+        /* Responsivo smartphone (390px logici, ~2532x1170 fisici a 460ppi) */
+        @media (max-width: 430px) {
+            .setup-card { padding: 1.5rem 1.15rem; border-radius: 14px; }
+            .setup-card .logo-icon { width: 46px; height: 46px; font-size: 1.2rem; border-radius: 11px; }
+            .setup-card h1 { font-size: 1.3rem !important; }
+            .list-box { height: 190px; font-size: 0.82rem; border-radius: 8px; }
+            .num-input { font-size: 0.95rem; padding: 0.6rem 0.8rem; }
+
+            #quiz-screen { padding: calc(var(--safe-top) + 0.75rem) 0.7rem calc(var(--safe-bottom) + 2rem); }
+            .question-card { padding: 1.2rem 1rem; border-radius: 11px; margin-top: 0.6rem; }
+            .question-area-badge { font-size: 0.7rem; padding: 0.2rem 0.55rem; margin-bottom: 0.7rem; }
+            .question-text { font-size: 1rem; line-height: 1.5; }
+            .options-list { gap: 0.45rem; margin-top: 1rem; }
+            .option-btn {
+                padding: 0.7rem 0.85rem;
+                font-size: 0.9rem;
+                line-height: 1.45;
+                gap: 0.7rem;
+                border-radius: 9px;
+            }
+            .option-btn .opt-letter { width: 27px; height: 27px; font-size: 0.8rem; border-radius: 7px; }
+            .feedback-box { padding: 1rem 1rem; margin-top: 1rem; border-radius: 10px; }
+            .feedback-title { font-size: 0.95rem; }
+            .spiegazione-box { font-size: 0.88rem; padding: 0.8rem 0.9rem; }
+            .spiegazione-label { font-size: 0.76rem; }
+            .btn-primary { padding: 0.75rem 1rem; font-size: 0.95rem; min-height: 44px; }
+            .btn-secondary { padding: 0.6rem 1rem; font-size: 0.88rem; min-height: 44px; }
+
+            .results-card { padding: 1.75rem 1.15rem; border-radius: 14px; }
+            .review-item { padding: 0.9rem 1rem; margin-bottom: 0.6rem; }
+            .review-q-text { font-size: 0.88rem; margin-bottom: 0.6rem; }
+            .review-opt-row { font-size: 0.83rem; padding: 0.35rem 0.45rem; gap: 0.5rem; }
+            .review-opt-letter { width: 22px; height: 22px; font-size: 0.7rem; border-radius: 5px; }
+        }
+
+        /* Schermi molto stretti (< 360px) */
+        @media (max-width: 359px) {
+            .option-btn { font-size: 0.85rem; padding: 0.6rem 0.7rem; gap: 0.55rem; }
+            .option-btn .opt-letter { width: 24px; height: 24px; font-size: 0.73rem; }
+            .question-text { font-size: 0.95rem; }
+            .review-q-text { font-size: 0.84rem; }
+            .review-opt-row { font-size: 0.8rem; }
+        }
+
+        /* Riduzione movimento */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============ SETUP ============ -->
+    <div id="setup-screen" class="screen active">
+        <div class="setup-card">
+            <div class="logo-icon"><i class="fa-solid fa-stethoscope"></i></div>
+            <h1 class="text-2xl mb-1" style="color:var(--text);">Quiz BIOTECNOLOGIE</h1>
+            <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:1.75rem;">BIOTECNOLOGIE — Test di autovalutazione</p>
+
+            <h2 class="text-lg mb-3" style="color:var(--text); font-weight:700;">Prepara la tua sessione</h2>
+
+            <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.06em;">
+                Seleziona area tematica
+            </label>
+            <select id="category-select" class="list-box" aria-label="Selezione area tematica"></select>
+
+            <div style="margin-top:1.25rem;">
+                <label for="num-questions" style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.06em;">
+                    Numero di domande
+                </label>
+                <input type="number" id="num-questions" class="num-input" min="1" value="5" aria-label="Numero di domande">
+                <p id="num-hint" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.3rem;"></p>
+            </div>
+
+            <div style="margin-top:1.5rem;">
+                <button id="start-btn" class="btn-primary" disabled>
+                    <i class="fa-solid fa-play" style="margin-right:0.4rem;"></i> Inizia il Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ QUIZ ============ -->
+    <div id="quiz-screen" class="screen">
+        <div class="quiz-container">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.25rem;">
+                <span id="q-counter" style="font-size:0.85rem; color:var(--text-muted); font-weight:600;"></span>
+                <span id="q-score" style="font-size:0.85rem; color:var(--primary); font-weight:700;"></span>
+            </div>
+            <div class="progress-track"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+
+            <div class="question-card">
+                <span id="q-area-badge" class="question-area-badge"></span>
+                <p id="q-text" class="question-text"></p>
+
+                <div id="q-options" class="options-list" role="radiogroup"></div>
+
+                <div id="feedback-container" style="display:none;"></div>
+            </div>
+
+            <div style="display:flex; gap:0.75rem; margin-top:1.25rem;">
+                <button id="submit-btn" class="btn-primary" style="flex:1;" disabled>
+                    <i class="fa-solid fa-check" style="margin-right:0.35rem;"></i> Conferma
+                </button>
+                <button id="next-btn" class="btn-primary" style="flex:1; display:none;">
+                    Prossima <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ RISULTATI ============ -->
+    <div id="results-screen" class="screen">
+        <div class="results-card">
+            <h1 class="text-2xl mb-4" style="color:var(--text);">Risultati</h1>
+
+            <svg class="score-ring" viewBox="0 0 120 120" width="150" height="150">
+                <circle cx="60" cy="60" r="52" stroke="var(--border)" stroke-width="8" fill="none"/>
+                <circle id="score-arc" cx="60" cy="60" r="52" stroke="var(--primary)" stroke-width="8" fill="none"
+                        stroke-dasharray="326.73" stroke-dashoffset="326.73" stroke-linecap="round"
+                        transform="rotate(-90 60 60)"/>
+                <text id="score-pct" x="60" y="56" text-anchor="middle" fill="var(--text)" font-family="Playfair Display,serif" font-size="28" font-weight="900">0%</text>
+                <text id="score-fraction" x="60" y="76" text-anchor="middle" fill="var(--text-muted)" font-family="Source Sans 3,sans-serif" font-size="13" font-weight="600">0/0</text>
+            </svg>
+
+            <p id="result-message" style="font-size:1.05rem; color:var(--text-muted); margin-bottom:1.75rem; line-height:1.5;"></p>
+
+            <div style="display:flex; gap:0.75rem; justify-content:center; margin-bottom:1.5rem; flex-wrap:wrap;">
+                <button id="retry-btn" class="btn-secondary"><i class="fa-solid fa-rotate-right" style="margin-right:0.3rem;"></i> Riprova</button>
+                <button id="new-session-btn" class="btn-primary" style="width:auto; padding:0.7rem 1.5rem;">
+                    <i class="fa-solid fa-house" style="margin-right:0.3rem;"></i> Nuova Sessione
+                </button>
+            </div>
+
+            <div style="text-align:left;">
+                <h3 style="font-size:1rem; color:var(--text-muted); margin-bottom:0.75rem; font-family:'Source Sans 3',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;">Riepilogo risposte</h3>
+                <div id="review-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* ================================================================
+       DATI DEL QUIZ (prime 5 domande, 5 alternative a–e)
+       ================================================================ */
+    window.__QUIZ_DATA__ = [
+	  {
+		"domanda": "Qual è la natura del legame chimico che unisce gli atomi di idrogeno all'atomo di ossigeno all'interno di una molecola d'acqua?",
+		"a": "Legame ionico dovuto al trasferimento di elettroni.",
+		"b": "Legame a ossigeno tra i nuclei.",
+		"c": "Legame a idrogeno tra molecole diverse.",
+		"d": "Legame metallico con condivisione di cariche.",
+		"e": "Legame covalente polare.",
+		"risposta_corretta": "e",
+		"spiegazione": "In ogni molecola d'acqua, i due atomi di idrogeno sono uniti all'ossigeno da legami covalenti; poiché l'ossigeno attira gli elettroni più dell'idrogeno, tali legami sono detti polari.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Perché la molecola d'acqua è definita 'polare'?",
+		"a": "Perché contiene isotopi dell'idrogeno provenienti dalle meteoriti.",
+		"b": "A causa di una distribuzione ineguale delle cariche elettriche al suo interno.",
+		"c": "Perché può esistere solo allo stato solido sotto i 200 K.",
+		"d": "Perché l'idrogeno e l'ossigeno hanno lo stesso numero di protoni.",
+		"e": "Perché contiene esclusivamente atomi di carbonio asimmetrici.",
+		"risposta_corretta": "b",
+		"spiegazione": "La polarità deriva dal fatto che il nucleo dell'ossigeno attira gli elettroni di legame più fortemente dei nuclei di idrogeno, creando una distribuzione non uniforme della carica.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Che cos'è il legame a idrogeno menzionato nel testo?",
+		"a": "Una forza intermolecolare tra la parte negativa di una molecola e quella positiva di un'altra.",
+		"b": "Il legame chimico più forte conosciuto in natura, superiore a quello ionico.",
+		"c": "Una forza che agisce solo all'interno del nucleo dell'atomo di idrogeno.",
+		"d": "Un legame che si forma solo tra atomi di idrogeno e atomi di carbonio.",
+		"e": "Una forza gravitazionale che agisce tra i planetesimi.",
+		"risposta_corretta": "a",
+		"spiegazione": "Il legame a idrogeno è una debole forza elettrostatica che si stabilisce tra l'ossigeno (polo negativo) di una molecola d'acqua e gli idrogeni (poli positivi) di altre molecole vicine.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale proprietà permette all'acqua di risalire lungo tubi sottili, fenomeno fondamentale per il nutrimento delle piante?",
+		"a": "Abbassamento crioscopico.",
+		"b": "Capillarità.",
+		"c": "Tensione superficiale.",
+		"d": "Solubilità gassosa.",
+		"e": "Innalzamento ebullioscopico.",
+		"risposta_corretta": "b",
+		"spiegazione": "La capillarità è la capacità dell'acqua di muoversi in spazi minimi e risalire tubi sottili grazie alle interazioni tra le sue molecole e quelle delle superfici con cui entra in contatto.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Per quale motivo l'elevato calore specifico dell'acqua è vitale per gli organismi?",
+		"a": "Permette all'acqua di evaporare a temperature molto basse.",
+		"b": "Consente all'acqua di sciogliere i grassi e le sostanze apolari.",
+		"c": "Aiuta a mantenere costante la temperatura interna degli organismi grazie alla resistenza ai cambiamenti termici.",
+		"d": "Garantisce che l'acqua sia sempre neutra con un pH pari a 14.",
+		"e": "Impedisce la fotosintesi clorofilliana nelle piante verdi.",
+		"risposta_corretta": "c",
+		"spiegazione": "L'elevato calore specifico determina una 'resistenza' dell'acqua alle variazioni di temperatura, contribuendo alla stabilità termica interna degli esseri viventi.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa accade alla densità dell'acqua quando questa gela (passa allo stato solido)?",
+		"a": "La densità aumenta, motivo per cui il ghiaccio affonda nei laghi.",
+		"b": "La densità rimane identica a quella dell'acqua liquida.",
+		"c": "La densità diventa infinita a 0 °C.",
+		"d": "La densità raddoppia rispetto a quella del ferro.",
+		"e": "La densità diminuisce, permettendo al ghiaccio di galleggiare sull'acqua liquida.",
+		"risposta_corretta": "e",
+		"spiegazione": "Al di sotto dei 4 °C la densità diminuisce; nel ghiaccio le molecole sono più distanti tra loro rispetto allo stato liquido per formare i legami a idrogeno, rendendolo meno denso.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come vengono classificate le molecole che si sciolgono facilmente in acqua?",
+		"a": "Idrofobe.",
+		"b": "Apolari.",
+		"c": "Idrofile.",
+		"d": "Sature.",
+		"e": "Anomeri lineari.",
+		"risposta_corretta": "c",
+		"spiegazione": "Le molecole che presentano affinità per l'acqua e vi si sciolgono sono definite idrofile; tra queste vi sono i composti ionici e quelli covalenti polari.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale caratteristica accomuna le sostanze 'idrofobe'?",
+		"a": "Sono costituite da composti ionici che formano soluzioni acquose.",
+		"b": "Sono molecole apolari e risultano insolubili in acqua.",
+		"c": "Hanno la capacità di donare sempre un protone all'acqua.",
+		"d": "Sono composte esclusivamente da atomi di ossigeno.",
+		"e": "Hanno un'elevata affinità per il solvente acqua.",
+		"risposta_corretta": "b",
+		"spiegazione": "Le sostanze idrofobe sono quelle che non si sciolgono in acqua; i composti apolari rientrano in questa categoria perché non hanno affinità con le molecole polari dell'acqua.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è l'effetto della temperatura sulla solubilità dei soluti solidi?",
+		"a": "La solubilità dei solidi diminuisce sempre all'aumentare della temperatura.",
+		"b": "La temperatura influenza solo la solubilità dei gas, non quella dei solidi.",
+		"c": "Per la maggior parte dei solidi, la solubilità aumenta con l'aumentare della temperatura.",
+		"d": "La solubilità aumenta solo se la soluzione è già satura.",
+		"e": "La temperatura rende ogni solido insolubile a 100 °C.",
+		"risposta_corretta": "c",
+		"spiegazione": "Il testo specifica che per la maggior parte delle sostanze solide la quantità di soluto che si scioglie in un solvente aumenta se la temperatura sale.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale fenomeno fisico spiega la formazione di una 'pellicola' elastica sulla superficie dell'acqua?",
+		"a": "L'abbassamento crioscopico.",
+		"b": "La tensione superficiale.",
+		"c": "La neutralizzazione acido-base.",
+		"d": "La frazione molare del soluto.",
+		"e": "La capillarità inversa.",
+		"risposta_corretta": "b",
+		"spiegazione": "La tensione superficiale è una forza correlata alla coesione che fa apparire sulla superficie dell'acqua una sorta di pellicola trasparente ed elastica.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Secondo gli studi sulla composizione isotopica, qual è la probabile origine dell'acqua sulla Terra?",
+		"a": "Si è formata per condensazione diretta nel disco di gas vicino al Sole.",
+		"b": "È stata portata esclusivamente dalle comete durante le collisioni primordiali.",
+		"c": "Deriva dalla sublimazione del magma terrestre.",
+		"d": "È un sottoprodotto della solidificazione dei silicati di magnesio.",
+		"e": "Proviene dagli asteroidi della cintura esterna.",
+		"risposta_corretta": "e",
+		"spiegazione": "Mentre in passato si pensava alle comete, studi recenti sulla composizione isotopica suggeriscono che l'acqua provenga dagli asteroidi della cintura esterna.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è il numero massimo di legami a idrogeno che una singola molecola d'acqua può formare con le molecole circostanti?",
+		"a": "2",
+		"b": "4",
+		"c": "6",
+		"d": "8",
+		"e": "10",
+		"risposta_corretta": "b",
+		"spiegazione": "Ogni molecola d'acqua può formare fino a 4 legami a idrogeno: l'atomo di ossigeno può legarsi a due idrogeni di altre molecole, mentre i suoi due idrogeni possono legarsi agli ossigeni di altre due molecole.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come viene definita l'attrazione tra le molecole d'acqua e le molecole di sostanze diverse o superfici dotate di carica elettrica?",
+		"a": "Coesione",
+		"b": "Tensione superficiale",
+		"c": "Adesione",
+		"d": "Capillarità",
+		"e": "Ionizzazione",
+		"risposta_corretta": "c",
+		"spiegazione": "L'adesione è l'attrazione tra molecole d'acqua e sostanze diverse; è questa forza che permette all'acqua di bagnare gli oggetti.",
+	   "area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa accade alle molecole d'acqua quando interagiscono con una sostanza ionica in soluzione?",
+		"a": "Le molecole d'acqua circondano gli ioni orientando verso di essi le regioni di carica opposta.",
+		"b": "L'acqua respinge gli ioni impedendo loro di separarsi.",
+		"c": "L'acqua trasforma i legami ionici in legami metallici.",
+		"d": "Le molecole d'acqua evaporano istantaneamente a causa dell'energia ionica.",
+		"e": "Gli ioni vengono distrutti dalla polarità dell'ossigeno.",
+		"risposta_corretta": "a",
+		"spiegazione": "Le molecole polari dell'acqua sono attratte dagli ioni: la regione positiva dell'acqua è attratta dagli ioni negativi e quella negativa dagli ioni positivi, circondandoli e separandoli.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è l'effetto dell'aumento della temperatura sulla solubilità dei soluti allo stato gassoso in acqua?",
+		"a": "La solubilità aumenta proporzionalmente alla temperatura.",
+		"b": "La solubilità diminuisce all'aumentare della temperatura.",
+		"c": "La temperatura non influenza la solubilità dei gas.",
+		"d": "I gas diventano solidi e formano un corpo di fondo.",
+		"e": "La solubilità dei gas rimane costante a ogni temperatura.",
+		"risposta_corretta": "b",
+		"spiegazione": "Mentre per i solidi la solubilità generalmente aumenta con la temperatura, nel caso dei gas essa diminuisce all'aumentare della temperatura.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come viene chiamato il fenomeno per cui la temperatura di congelamento di una soluzione è inferiore a quella del solvente puro?",
+		"a": "Innalzamento ebullioscopico",
+		"b": "Ionizzazione dinamica",
+		"c": "Sublimazione termica",
+		"d": "Tensione di vapore",
+		"e": "Abbassamento crioscopico",
+		"risposta_corretta": "e",
+		"spiegazione": "L'abbassamento crioscopico è il fenomeno per cui la temperatura di congelamento di una soluzione è minore di quella del solvente puro.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Nell'acqua pura allo stato liquido, qual è la frequenza approssimativa della ionizzazione delle molecole?",
+		"a": "Tutte le molecole sono ionizzate.",
+		"b": "Circa una molecola ogni 100.",
+		"c": "Circa una molecola ogni 18 milioni.",
+		"d": "Nessuna molecola si ionizza mai.",
+		"e": "Circa una molecola su dieci.",
+		"risposta_corretta": "c",
+		"spiegazione": "L'acqua pura ha una debolissima tendenza a ionizzarsi: soltanto circa una molecola ogni 18 milioni si scinde in ioni.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "In un fosfogliceride (costituente delle membrane cellulari), quale parte della molecola manifesta caratteristiche idrofobe?",
+		"a": "La testa ionica contenente il gruppo fosfato.",
+		"b": "Le due lunghe code idrocarburiche.",
+		"c": "Il solo gruppo X legato al fosfato.",
+		"d": "L'intera molecola è idrofoba.",
+		"e": "Nessuna parte è idrofoba.",
+		"risposta_corretta": "b",
+		"spiegazione": "I fosfogliceridi hanno una testa ionica (idrofila) e due lunghe code idrocarburiche apolari, che sono quindi insolubili in acqua e idrofobe.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Perché le membrane cellulari si organizzano in un doppio strato lipidico in presenza di un mezzo acquoso?",
+		"a": "Perché le code idrofobe cercano il contatto con l'acqua.",
+		"b": "Perché le teste idrofile si rivolgono verso l'esterno (mezzo acquoso) e le code idrofobe verso l'interno.",
+		"c": "Per permettere all'acqua di sciogliere completamente i lipidi di membrana.",
+		"d": "Perché l'acqua pura ha un pH troppo alto per le teste polari.",
+		"e": "Perché i legami a idrogeno distruggono le teste ioniche.",
+		"risposta_corretta": "b",
+		"spiegazione": "Le code apolari (idrofobe) si rivolgono verso l'interno, mentre le teste polari (idrofile) sono rivolte verso il mezzo acquoso interno ed esterno.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Da cosa dipende principalmente la capacità di un amminoacido di interagire efficacemente con l'acqua?",
+		"a": "Dalla lunghezza della catena di atomi di carbonio principale.",
+		"b": "Dalla natura polare o non polare della sua catena laterale (gruppo R).",
+		"c": "Dalla sua capacità di formare esclusivamente legami metallici.",
+		"d": "Dal fatto di appartenere sempre alla serie D.",
+		"e": "Dalla quantità di isotopi di ossigeno presenti.",
+		"risposta_corretta": "b",
+		"spiegazione": "Le proprietà di interazione con l'acqua dipendono dalla natura della catena laterale (— R): più essa è polare, meglio l'amminoacido interagisce con l'acqua.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come viene definito il grado di acidità di una soluzione in base alla concentrazione di ioni idronio (H3O+)?",
+		"a": "Molarità",
+		"b": "Temperatura crioscopica",
+		"c": "Solubilità satura",
+		"d": "Capillarità",
+		"e": "pH",
+		"risposta_corretta": "e",
+		"spiegazione": "Il grado di acidità si misura tramite il pH, un parametro legato alla concentrazione in soluzione di ioni H3O+.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è l'unità di misura della molarità (M) nel calcolo della concentrazione di una soluzione?",
+		"a": "mol/kg",
+		"b": "g/L",
+		"c": "mol/L",
+		"d": "mg/mL",
+		"e": "kg/mol",
+		"risposta_corretta": "c",
+		"spiegazione": "La molarità (M) è il rapporto tra il numero di moli del soluto e il volume della soluzione espresso in litri (mol/L).",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "In chimica, come viene definito un 'acido' secondo il comportamento con i protoni?",
+		"a": "Qualsiasi molecola che cede ioni ossidrili (OH-).",
+		"b": "Qualsiasi molecola o ione che possa donare un protone (H+).",
+		"c": "Una sostanza che aumenta la tensione superficiale.",
+		"d": "Un composto esclusivamente apolare.",
+		"e": "Una sostanza che ha sempre pH uguale a 14.",
+		"risposta_corretta": "b",
+		"spiegazione": "È detto acido qualsiasi molecola o ione che possa donare un protone.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa si forma durante una reazione di neutralizzazione tra una soluzione acida e una basica?",
+		"a": "Solo ioni idrogeno gassosi.",
+		"b": "Molecole d'acqua e un sale.",
+		"c": "Un precipitato di lipidi idrofobi.",
+		"d": "Un aumento della frazione molare del solvente.",
+		"e": "Anidride carbonica e ossigeno.",
+		"risposta_corretta": "b",
+		"spiegazione": "Nelle reazioni di neutralizzazione, gli ioni H+ e OH- si legano producendo acqua e un sale che resta in soluzione in forma ionizzata.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la differenza principale nella digeribilità tra amido e cellulosa per l'organismo umano?",
+		"a": "L'amido è idrofobo, la cellulosa è idrofila.",
+		"b": "L'uomo non ha gli enzimi specifici per degradare i legami beta-glicosidici della cellulosa.",
+		"c": "La cellulosa contiene azoto, l'amido no.",
+		"d": "L'amido ha una massa molecolare superiore a 2 milioni.",
+		"e": "La cellulosa è solubile solo in benzene.",
+		"risposta_corretta": "b",
+		"spiegazione": "L'unica differenza chimica è il tipo di legame glicosidico (alfa per l'amido, beta per la cellulosa); l'uomo non può digerire la cellulosa perché manca degli enzimi per degradare i legami beta.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quando una soluzione viene definita 'satura'?",
+		"a": "Quando contiene pochissimo soluto rispetto al solvente.",
+		"b": "Quando continuando ad aggiungere soluto si forma un corpo di fondo solido.",
+		"c": "Quando la temperatura scende sotto lo zero termico.",
+		"d": "Quando il solvente è un liquido organico come l'acetone.",
+		"e": "Quando il pH raggiunge il valore di 7.",
+		"risposta_corretta": "b",
+		"spiegazione": "La solubilità non è infinita: continuando ad aggiungere soluto a una soluzione si forma un corpo di fondo e la soluzione si dice satura.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come sono composti i trigliceridi, i lipidi più diffusi in natura?",
+		"a": "Dall'unione di acido fosforico e basi azotate.",
+		"b": "Dall'esterificazione della glicerina con tre molecole di acidi grassi.",
+		"c": "Da lunghe catene di amminoacidi uniti da legami peptidici.",
+		"d": "Da molecole di glucosio e fruttosio in proporzione 1:1.",
+		"e": "Dall'unione di tre molecole di acqua e una di benzene.",
+		"risposta_corretta": "b",
+		"spiegazione": "I grassi e gli oli sono trigliceridi, cioè triesteri della glicerina formati con tre molecole di acidi grassi.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quali sono le basi azotate che si appaiano nel DNA tramite legami a idrogeno?",
+		"a": "Adenina con Citosina e Guanina con Timina.",
+		"b": "Adenina con Uracile e Citosina con Timina.",
+		"c": "Uracile con Timina e Adenina con Guanina.",
+		"d": "Ribosio con Desossiribosio.",
+		"e": "Adenina con Timina e Guanina con Citosina.",
+		"risposta_corretta": "e",
+		"spiegazione": "Nel DNA, l'adenina si lega solo con la timina (A-T) e la guanina solo con la citosina (G-C) tramite legami a idrogeno.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa indica il termine 'polimero' nel contesto delle biomolecole?",
+		"a": "Una molecola a basso peso molecolare come il glucosio.",
+		"b": "Una lunga catena (macromolecola) ottenuta dall'unione di monomeri.",
+		"c": "Una sostanza che non può mai sciogliersi in acqua.",
+		"d": "Un tipo di solvente organico apolare.",
+		"e": "Un atomo di carbonio con quattro legami singoli.",
+		"risposta_corretta": "b",
+		"spiegazione": "I polimeri sono lunghe catene costituite da un insieme di gruppi chimici (monomeri) legati tra loro da legami covalenti.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la principale funzione biologica degli acidi nucleici (DNA e RNA)?",
+		"a": "Fornire energia immediata tramite la fotosintesi.",
+		"b": "Essere i depositari dell'informazione genetica e controllare la sintesi proteica.",
+		"c": "Agire come solventi per le vitamine liposolubili.",
+		"d": "Formare esclusivamente il doppio strato delle membrane cellulari.",
+		"e": "Regolare la tensione superficiale del citoplasma.",
+		"risposta_corretta": "b",
+		"spiegazione": "Gli acidi nucleici sono i depositari dell'informazione genetica (trasmissione caratteri ereditari) e controllano la sintesi di tutte le proteine.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Perché i planetesimi che hanno dato origine alla Terra inizialmente non contenevano acqua?",
+		"a": "Perché l'idrogeno e l'elio non erano presenti nel disco di gas primordiale.",
+		"b": "A causa della temperatura troppo elevata alla distanza di 150 milioni di km dal Sole.",
+		"c": "Perché la forza di gravità terrestre era insufficiente per trattenere i vapori.",
+		"d": "Perché l'acqua si trovava esclusivamente in forma di silicati di magnesio.",
+		"e": "Perché le comete non erano ancora entrate in collisione con il disco gassoso.",
+		"risposta_corretta": "b",
+		"spiegazione": "Al momento della formazione terrestre, la temperatura a quella distanza dal Sole era troppo elevata per permettere la condensazione dell'acqua.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale evidenza scientifica ha portato a ipotizzare che l'acqua terrestre provenga dagli asteroidi della cintura esterna?",
+		"a": "Lo studio della pressione atmosferica delle meteoriti.",
+		"b": "Il rilevamento di metalli refrattari come zirconio e titanio.",
+		"c": "Studi recenti sulla composizione isotopica dell'acqua.",
+		"d": "La presenza di elio liquido all'interno dei crateri lunari.",
+		"e": "L'analisi dei gas nobili intrappolati nel ghiaccio antartico.",
+		"risposta_corretta": "c",
+		"spiegazione": "Studi recenti sulla composizione isotopica hanno messo in discussione l'origine cometaria, suggerendo la provenienza dagli asteroidi della cintura esterna.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Per quale ragione i legami covalenti nella molecola d'acqua sono definiti 'polari'?",
+		"a": "Perché gli atomi di idrogeno si dispongono ai poli opposti della molecola.",
+		"b": "Perché il nucleo dell'ossigeno attira gli elettroni di legame più fortemente di quelli di idrogeno.",
+		"c": "A causa della presenza di legami a idrogeno intracellulari.",
+		"d": "Perché la molecola può esistere solo allo stato solido ai poli terrestri.",
+		"e": "Perché l'acqua ha un pH esattamente pari a 7 in condizioni standard.",
+		"risposta_corretta": "b",
+		"spiegazione": "L'ossigeno, avendo 8 protoni, attira maggiormente gli elettroni rispetto all'idrogeno (1 protone), creando polarità.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la durata approssimativa dei legami a idrogeno nell'acqua allo stato liquido?",
+		"a": "Alcuni minuti, garantendo la stabilità termica.",
+		"b": "Pochi millisecondi.",
+		"c": "Pochi miliardesimi di secondo.",
+		"d": "Sono permanenti finché l'acqua non raggiunge l'ebollizione.",
+		"e": "Dipende esclusivamente dalla molarità del soluto.",
+		"risposta_corretta": "c",
+		"spiegazione": "Nell'acqua liquida i legami a idrogeno durano pochi miliardesimi di secondo, pur mantenendo le molecole unite per la maggior parte del tempo.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come viene definita la tendenza delle molecole d'acqua a rimanere unite tra loro?",
+		"a": "Adesione.",
+		"b": "Capillarità.",
+		"c": "Coesione.",
+		"d": "Solubilità.",
+		"e": "Molarità.",
+		"risposta_corretta": "c",
+		"spiegazione": "La coesione è la proprietà che descrive la tendenza delle molecole d'acqua a restare legate l'una all'altra.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale forza permette all'acqua di 'bagnare' gli oggetti e aderire a superfici cariche?",
+		"a": "Tensione superficiale.",
+		"b": "Adesione.",
+		"c": "Abbassamento crioscopico.",
+		"d": "Innalzamento ebullioscopico.",
+		"e": "Legame covalente puro.",
+		"risposta_corretta": "b",
+		"spiegazione": "L'adesione è l'attrazione tra le molecole d'acqua e molecole di sostanze diverse o superfici dotate di carica.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Il calore specifico dell'acqua è circa il doppio di quello di quale altra sostanza citata?",
+		"a": "Ferro.",
+		"b": "Aria.",
+		"c": "Alcol.",
+		"d": "Silicati di magnesio.",
+		"e": "Benzene.",
+		"risposta_corretta": "c",
+		"spiegazione": "Il testo specifica che il calore specifico dell'acqua è circa il doppio di quello dell'alcol.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Rispetto al ferro, quante volte è superiore il calore specifico dell'acqua?",
+		"a": "2 volte.",
+		"b": "4 volte.",
+		"c": "10 volte.",
+		"d": "100 volte.",
+		"e": "Hanno lo stesso valore.",
+		"risposta_corretta": "c",
+		"spiegazione": "L'acqua ha un calore specifico che è 10 volte superiore a quello del ferro.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa accade alla struttura molecolare dell'acqua a 0 °C quando solidifica?",
+		"a": "Le molecole si avvicinano eliminando i legami a idrogeno.",
+		"b": "Le molecole si allontanano per formare 4 legami a idrogeno con altrettante molecole.",
+		"c": "La densità raddoppia a causa della pressione atmosferica.",
+		"d": "Tutti i legami covalenti polari diventano legami ionici.",
+		"e": "Le molecole iniziano a ruotare più velocemente aumentando il volume.",
+		"risposta_corretta": "b",
+		"spiegazione": "Per formare 4 legami a idrogeno nello stato solido, le molecole sono costrette ad allontanarsi, aumentando il volume e diminuendo la densità.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "In una soluzione acquosa, come viene definito il componente presente in minore quantità?",
+		"a": "Solvente.",
+		"b": "Sospensione.",
+		"c": "Soluto.",
+		"d": "Miscuglio eterogeneo.",
+		"e": "Corpo di fondo.",
+		"risposta_corretta": "c",
+		"spiegazione": "In una soluzione, il componente più abbondante è il solvente, mentre quelli in minore quantità sono i soluti.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale tra i seguenti è un esempio di solvente organico menzionato nei documenti?",
+		"a": "Soluzione fisiologica.",
+		"b": "Acetone.",
+		"c": "Solfato di rame.",
+		"d": "Succhi gastrici.",
+		"e": "Acqua di mare.",
+		"risposta_corretta": "b",
+		"spiegazione": "Il testo cita benzene e acetone come esempi di solventi organici.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quali tipi di composti sono generalmente solubili in acqua (idrofili)?",
+		"a": "Composti apolari e grassi.",
+		"b": "Composti ionici e covalenti polari.",
+		"c": "Solo sostanze allo stato aeriforme.",
+		"d": "Esclusivamente le proteine strutturali.",
+		"e": "Idrocarburi a lunga catena.",
+		"risposta_corretta": "b",
+		"spiegazione": "Le molecole idrofile che si sciolgono in acqua includono i composti ionici e quelli covalenti polari.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa succede se si continua ad aggiungere soluto a una soluzione già 'satura'?",
+		"a": "La temperatura della soluzione aumenta spontaneamente.",
+		"b": "Il soluto in eccesso evapora immediatamente.",
+		"c": "Si forma un corpo di fondo solido.",
+		"d": "La molarità aumenta all'infinito.",
+		"e": "La soluzione diventa un solvente organico.",
+		"risposta_corretta": "c",
+		"spiegazione": "Quando una soluzione è satura, l'aggiunta di ulteriore soluto porta alla formazione di un corpo di fondo.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come varia generalmente la solubilità dei gas in acqua all'aumentare della temperatura?",
+		"a": "Aumenta costantemente.",
+		"b": "Diminuisce.",
+		"c": "Resta invariata.",
+		"d": "Aumenta solo sotto i 4 °C.",
+		"e": "Dipende dal pH, non dalla temperatura.",
+		"risposta_corretta": "b",
+		"spiegazione": "Nel caso di soluti allo stato gassoso, la solubilità diminuisce con l'aumentare della temperatura.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "L'innalzamento ebullioscopico di una soluzione dipende da:",
+		"a": "La natura chimica del soluto.",
+		"b": "Esclusivamente dalla quantità di soluto sciolto.",
+		"c": "Dalla viscosità del solvente organico utilizzato.",
+		"d": "Dalla velocità dei legami a idrogeno.",
+		"e": "Dalla presenza di amminoacidi della serie D.",
+		"risposta_corretta": "b",
+		"spiegazione": "L'entità dell'innalzamento ebullioscopico dipende solo dalla quantità di soluto e non dalla sua natura.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la reattività dello ione H+ nell'acqua pura?",
+		"a": "È inerte e rimane isolato.",
+		"b": "Tende a legarsi subito con una molecola d'acqua per formare lo ione idronio (H3O+).",
+		"c": "Si trasforma in un atomo di elio neutro.",
+		"d": "Neutralizza istantaneamente tutti i lipidi presenti.",
+		"e": "Aumenta la tensione superficiale rendendo l'acqua solida.",
+		"risposta_corretta": "b",
+		"spiegazione": "Lo ione H+ è estremamente reattivo e si lega a una molecola d'acqua formando lo ione idronio H3O+.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la percentuale media di acqua nel corpo umano secondo i documenti?",
+		"a": "16%",
+		"b": "13%",
+		"c": "65%",
+		"d": "1%",
+		"e": "5%",
+		"risposta_corretta": "c",
+		"spiegazione": "La Figura 17.1 indica che l'acqua costituisce il 65% della composizione del corpo umano.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "In un fosfogliceride, la 'testa' è definita:",
+		"a": "Apolare e idrofoba.",
+		"b": "Ionica e idrofila.",
+		"c": "Costituita esclusivamente da acidi grassi saturi.",
+		"d": "Solubile solo in acetone.",
+		"e": "Priva di carica elettrica.",
+		"risposta_corretta": "b",
+		"spiegazione": "I fosfogliceridi possiedono una testa ionica che è idrofila.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Dove sono rivolte le teste polari dei fosfogliceridi nelle membrane cellulari?",
+		"a": "Verso l'interno del doppio strato lipidico.",
+		"b": "Verso il mezzo acquoso interno ed esterno.",
+		"c": "Esclusivamente verso i mitocondri.",
+		"d": "Lontano dal citoplasma per evitare la ionizzazione.",
+		"e": "Verso le catene di acidi grassi insaturi.",
+		"risposta_corretta": "b",
+		"spiegazione": "Le teste polari si rivolgono verso l'ambiente acquoso (citoplasma ed extracellulare), mentre le code sono all'interno.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa determina la capacità di un amminoacido di interagire con l'acqua?",
+		"a": "La presenza del gruppo amminico — NH2.",
+		"b": "La natura polare o non polare della sua catena laterale (— R).",
+		"c": "Il fatto di essere un monomero dei carboidrati.",
+		"d": "La lunghezza totale della proteina di cui fa parte.",
+		"e": "L'assenza di atomi di carbonio asimmetrici.",
+		"risposta_corretta": "b",
+		"spiegazione": "Tanto più una catena laterale R è polare, tanto meglio l'amminoacido interagisce con l'acqua.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Una sostanza che, sciolta in acqua, libera ioni ossidrili (OH–) è definita:",
+		"a": "Acido forte.",
+		"b": "Soluto apolare.",
+		"c": "Base.",
+		"d": "Polimero idrofobo.",
+		"e": "Anomero beta.",
+		"risposta_corretta": "c",
+		"spiegazione": "È detta base qualsiasi molecola o ione che possa cedere ioni ossidrili.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è il valore di pH per una soluzione definita 'neutra'?",
+		"a": "0",
+		"b": "14",
+		"c": "7",
+		"d": "4",
+		"e": "10",
+		"risposta_corretta": "c",
+		"spiegazione": "Le sostanze con pH 7 sono definite neutre.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Gli indicatori di pH sono sostanze in grado di:",
+		"a": "Rendere l'acqua completamente solida a temperatura ambiente.",
+		"b": "Cambiare colore a seconda del pH della soluzione.",
+		"c": "Eliminare i legami a idrogeno.",
+		"d": "Aumentare la solubilità dei grassi.",
+		"e": "Misurare la massa molecolare dell'RNA.",
+		"risposta_corretta": "b",
+		"spiegazione": "Gli indicatori sono sostanze particolari che cambiano colore a seconda del pH della soluzione in cui sono versati.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la caratteristica di un 'acido forte'?",
+		"a": "Ha sempre una concentrazione elevatissima.",
+		"b": "Si dissocia completamente in acqua.",
+		"c": "Non reagisce mai con le basi.",
+		"d": "È costituito solo da molecole apolari.",
+		"e": "Rende la soluzione basica aumentandone il pH.",
+		"risposta_corretta": "b",
+		"spiegazione": "Le sostanze acide che si dissociano completamente in acqua sono dette acidi forti.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Nelle reazioni di neutralizzazione, cosa si produce oltre all'acqua?",
+		"a": "Un acido debole.",
+		"b": "Un sale.",
+		"c": "Glucosio.",
+		"d": "Fosfogliceridi.",
+		"e": "Legami peptidici.",
+		"risposta_corretta": "b",
+		"spiegazione": "Oltre all'acqua, nelle reazioni di neutralizzazione si forma un sale che resta in soluzione in forma ionizzata.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Per quale motivo l'acqua ha una 'resistenza' ai cambiamenti di temperatura?",
+		"a": "A causa del suo basso calore specifico.",
+		"b": "Grazie al suo elevato calore specifico.",
+		"c": "Perché le sue molecole sono legate da legami metallici.",
+		"d": "A causa dell'abbassamento crioscopico naturale.",
+		"e": "Perché ha una densità massima a 100 °C.",
+		"risposta_corretta": "b",
+		"spiegazione": "L'elevato calore specifico dell'acqua determina la sua resistenza alle variazioni termiche, favorendo la stabilità negli organismi.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Che cosa succede alle molecole d'acqua quando circondano uno ione positivo?",
+		"a": "Orientano verso di esso l'atomo di idrogeno (polo positivo).",
+		"b": "Orientano verso di esso la regione debolmente negativa (atomo di ossigeno).",
+		"c": "Si scindono immediatamente in idrogeno gassoso.",
+		"d": "Formano un legame covalente polare permanente con lo ione.",
+		"e": "Galleggiano sulla superficie a causa della tensione superficiale.",
+		"risposta_corretta": "b",
+		"spiegazione": "La regione debolmente negativa della molecola d'acqua interagisce elettrostaticamente con gli ioni di carica positiva.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Perché il ghiaccio galleggia sull'acqua liquida?",
+		"a": "Perché ha una massa maggiore a parità di volume.",
+		"b": "Perché è meno denso dell'acqua liquida.",
+		"c": "A causa dell'innalzamento ebullioscopico.",
+		"d": "Perché contiene più sali minerali dell'acqua liquida.",
+		"e": "Per l'assenza di legami a idrogeno.",
+		"risposta_corretta": "b",
+		"spiegazione": "Il ghiaccio è meno denso dell'acqua liquida poiché le sue molecole sono più distanti, permettendogli di galleggiare.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la definizione di 'idrofoba' applicata a una sostanza?",
+		"a": "Una sostanza che ha un'elevata affinità per l'acqua.",
+		"b": "Una sostanza che si scioglie in acqua formando soluzioni acquose.",
+		"c": "Una sostanza insolubile in acqua.",
+		"d": "Una molecola che contiene esclusivamente gruppi fosfato carichi.",
+		"e": "Un composto che ha un pH compreso tra 7 e 14.",
+		"risposta_corretta": "c",
+		"spiegazione": "Le sostanze idrofobe sono quelle insolubili in acqua, tipicamente i composti apolari.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale proprietà dell'acqua permette alle piante di assorbire acqua dalle radici e trasferirla alle foglie?",
+		"a": "Neutralizzazione.",
+		"b": "Esterificazione.",
+		"c": "Capillarità.",
+		"d": "Molarità.",
+		"e": "Ionizzazione dinamica.",
+		"risposta_corretta": "c",
+		"spiegazione": "Grazie alla capillarità, l'acqua è in grado di risalire tubi sottili, permettendo alle piante il trasporto dei nutrienti.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Dal punto di vista chimico, come vengono definiti i carboidrati?",
+		"a": "Polimeri di soli atomi di carbonio e idrogeno.",
+		"b": "Poliidrossialdeidi o poliidrossichetoni.",
+		"c": "Acidi grassi a catena lunga uniti a glicerolo.",
+		"d": "Composti costituiti esclusivamente da gruppi fosfato.",
+		"e": "Esteri della glicerina con tre molecole di amminoacidi.",
+		"risposta_corretta": "b",
+		"spiegazione": "I carboidrati sono definiti poliidrossialdeidi o poliidrossichetoni perché contengono un gruppo carbonile (aldeidico o chetonico) e più gruppi ossidrile.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la formula molecolare generale dei monosaccaridi riportata nei testi?",
+		"a": "CnH2nOn",
+		"b": "CnHnO2n",
+		"c": "C6H12O6 per tutti i tipi.",
+		"d": "R-COOH",
+		"e": "Cn(H2O)2n",
+		"risposta_corretta": "a",
+		"spiegazione": "La formula molecolare generale dei monosaccaridi è CnH2nOn, dove n non è mai inferiore a tre.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale tra i seguenti monosaccaridi è un esempio di chetoesoso?",
+		"a": "D-glucosio",
+		"b": "D-ribosio",
+		"c": "D-fruttosio",
+		"d": "2-desossiribosio",
+		"e": "Gliceraldeide",
+		"risposta_corretta": "c",
+		"spiegazione": "Il D-fruttosio è un esoso (6 atomi di carbonio) che possiede un gruppo funzionale chetonico, venendo quindi classificato come chetoesoso.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Che cosa si intende per 'enantiomeri' nel caso della gliceraldeide?",
+		"a": "Molecole con formula bruta differente.",
+		"b": "Molecole che sono l'una l'immagine speculare e non sovrapponibile dell'altra.",
+		"c": "Zuccheri che differiscono solo per il numero di gruppi ossidrile.",
+		"d": "Isomeri che presentano la chiusura dell'anello in posizione C-4.",
+		"e": "Monosaccaridi che hanno perso un atomo di ossigeno.",
+		"risposta_corretta": "b",
+		"spiegazione": "La D-gliceraldeide e la L-gliceraldeide sono enantiomeri, ovvero isomeri ottici speculari non sovrapponibili per la presenza di un centro stereogenico.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale serie di monosaccaridi è l'unica ad avere rilevanza biologica e a essere utilizzata dagli organismi viventi?",
+		"a": "Serie L",
+		"b": "Serie Alpha",
+		"c": "Serie Beta",
+		"d": "Serie D",
+		"e": "Serie Omega",
+		"risposta_corretta": "d",
+		"spiegazione": "Solo i monosaccaridi della serie D (come la D-gliceraldeide) sono utilizzati dagli organismi viventi, mentre la serie L è biologicamente inerte.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la differenza strutturale principale tra il ribosio e il 2-desossiribosio?",
+		"a": "Il ribosio ha sei atomi di carbonio, il desossiribosio ne ha cinque.",
+		"b": "Il desossiribosio ha un atomo di ossigeno in meno sul carbonio C-2.",
+		"c": "Il ribosio è un chetoso, mentre il desossiribosio è un aldoso.",
+		"d": "Il desossiribosio presenta solo legami beta-glicosidici.",
+		"e": "Il ribosio non è in grado di formare strutture cicliche.",
+		"risposta_corretta": "b",
+		"spiegazione": "Il 2-desossiribosio si ottiene dal ribosio per eliminazione dell'atomo di ossigeno legato al carbonio C-2.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "In soluzione acquosa, la ciclizzazione del glucosio avviene per reazione tra quali gruppi?",
+		"a": "Tra il gruppo aldeidico in C-1 e l'ossidrile in C-5.",
+		"b": "Tra due gruppi ossidrile alle estremità della catena.",
+		"c": "Tra il gruppo chetonico in C-2 e l'ossidrile in C-6.",
+		"d": "Tra il gruppo carbossilico e il gruppo amminico.",
+		"e": "Esclusivamente tra atomi di carbonio asimmetrici.",
+		"risposta_corretta": "a",
+		"spiegazione": "Circa il 99% del glucosio in soluzione forma un emiacetale ciclico tramite la reazione del gruppo aldeidico con il gruppo alcolico in posizione C-5.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come viene definito l'anomero del D-glucosio che presenta il gruppo —OH sopra il piano dell'anello?",
+		"a": "α-d-glucosio",
+		"b": "L-glucosio",
+		"c": "β-d-glucosio",
+		"d": "Glucosio piranoso lineare",
+		"e": "Enantiomero destrogiro",
+		"risposta_corretta": "c",
+		"spiegazione": "L'anomero beta (β-d-glucosio) ha il gruppo —OH disposto sopra il piano dell'anello, in configurazione 'cis' rispetto al gruppo CH2OH.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è il nome degli anelli ciclici a cinque atomi tipici di monosaccaridi come il fruttosio?",
+		"a": "Piranosi",
+		"b": "Emiacetali lineari",
+		"c": "Furanosi",
+		"d": "Polimeri ramificati",
+		"e": "Disaccaridi condensati",
+		"risposta_corretta": "c",
+		"spiegazione": "Le strutture cicliche a cinque atomi sono dette furanosi perché ricordano la struttura del furano.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale tipo di legame unisce due monosaccaridi per formare un disaccaride?",
+		"a": "Legame peptidico",
+		"b": "Legame a idrogeno forte",
+		"c": "Legame O-glicosidico",
+		"d": "Legame ionico per trasferimento elettronico",
+		"e": "Legame estere tra acidi grassi",
+		"risposta_corretta": "c",
+		"spiegazione": "L'unione di due monosaccaridi avviene tramite una reazione di condensazione che forma un legame O-glicosidico, con un atomo di ossigeno a ponte.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Di quali monosaccaridi è composto il saccarosio?",
+		"a": "Due molecole di α-d-glucosio.",
+		"b": "Una molecola di glucosio e una di galattosio.",
+		"c": "Una molecola di α-d-glucosio e una di β-d-fruttosio.",
+		"d": "Due molecole di β-d-galattosio.",
+		"e": "Una molecola di ribosio e una di glucosio.",
+		"risposta_corretta": "c",
+		"spiegazione": "Il saccarosio è formato dall'unione di una molecola di α-d-glucosio e una di β-d-fruttosio.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale disaccaride si ottiene dalla digestione dell'amido?",
+		"a": "Lattosio",
+		"b": "Maltosio",
+		"c": "Cellobiosio",
+		"d": "Saccarosio",
+		"e": "Fruttosio semplice",
+		"risposta_corretta": "b",
+		"spiegazione": "Il maltosio è un disaccaride prodotto dalla digestione (idrolisi) dell'amido.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è il potere dolcificante del fruttosio rispetto al saccarosio (posto pari a 1)?",
+		"a": "0,5",
+		"b": "1",
+		"c": "1,8",
+		"d": "200",
+		"e": "300",
+		"risposta_corretta": "c",
+		"spiegazione": "Il fruttosio ha un potere dolcificante pari a 1,8, superiore a quello del saccarosio.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come vengono chiamati i polisaccaridi costituiti dalla ripetizione di un solo tipo di monosaccaride?",
+		"a": "Eteropolisaccaridi",
+		"b": "Glicoconiugati",
+		"c": "Omopolisaccaridi",
+		"d": "Oligosaccaridi semplici",
+		"e": "Trigliceridi glucidici",
+		"risposta_corretta": "c",
+		"spiegazione": "Gli omopolisaccaridi sono costituiti dalla ripetizione di un unico tipo di monosaccaride, come nel caso dell'amido o della cellulosa.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la frazione dell'amido che presenta una catena lineare con andamento elicoidale?",
+		"a": "Amilopectina",
+		"b": "Glicogeno",
+		"c": "Amilosio",
+		"d": "Chitina",
+		"e": "Cellulosa",
+		"risposta_corretta": "c",
+		"spiegazione": "L'amilosio è la componente dell'amido (15-20%) formata da una catena lineare avvolta a spirale.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Ogni quante unità di glucosio si presentano mediamente le ramificazioni nell'amilopectina?",
+		"a": "Ogni 2 unità.",
+		"b": "Ogni 10-12 unità.",
+		"c": "Ogni 25-30 unità.",
+		"d": "Ogni 100 unità.",
+		"e": "Non presenta ramificazioni.",
+		"risposta_corretta": "c",
+		"spiegazione": "Nell'amilopectina le ramificazioni (legami α1,6) avvengono mediamente ogni 25-30 unità di glucosio.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Dove si trova depositato principalmente il glicogeno negli organismi animali?",
+		"a": "Nella parete delle cellule vegetali.",
+		"b": "Nel sangue circolante come zucchero semplice.",
+		"c": "Nel citoplasma delle cellule del fegato e del muscolo.",
+		"d": "Esclusivamente nel tessuto adiposo sotto forma di gocce.",
+		"e": "Nelle radici e nei tuberi come riserva invernale.",
+		"risposta_corretta": "c",
+		"spiegazione": "Il glicogeno è il polisaccaride di riserva animale e si deposita sotto forma di granuli nel fegato e nei muscoli.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la principale differenza strutturale tra glicogeno e amilopectina?",
+		"a": "Il glicogeno è lineare, l'amilopectina è ramificata.",
+		"b": "Il glicogeno è molto più ramificato dell'amilopectina.",
+		"c": "L'amilopectina contiene galattosio, il glicogeno solo glucosio.",
+		"d": "Il glicogeno usa legami beta, l'amilopectina usa legami alfa.",
+		"e": "Hanno la stessa identica frequenza di ramificazione.",
+		"risposta_corretta": "b",
+		"spiegazione": "Il glicogeno ha una struttura simile all'amilopectina ma è molto più ramificato (ramificazioni ogni 10-12 o 15 unità).",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale tipo di legame caratterizza la cellulosa, rendendola una fibra resistente?",
+		"a": "Legami α1,4-glicosidici",
+		"b": "Legami α1,6-glicosidici",
+		"c": "Legami β1,4-glicosidici",
+		"d": "Legami peptidici trasversali",
+		"e": "Legami ionici con sali minerali",
+		"risposta_corretta": "c",
+		"spiegazione": "La cellulosa è formata da unità di β-d-glucosio unite da legami β1,4-glicosidici che conferiscono una struttura lineare e fibrosa.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Perché la cellulosa è indigeribile per l'organismo umano?",
+		"a": "Perché è un composto inorganico che non contiene carbonio.",
+		"b": "A causa dell'elevata tossicità dei legami beta.",
+		"c": "Perché l'uomo manca degli enzimi (cellulasi) per idrolizzare i legami β-glicosidici.",
+		"d": "Perché si scioglie solo in solventi organici apolari come il benzene.",
+		"e": "Perché le sue catene sono troppo corte per essere degradate.",
+		"risposta_corretta": "c",
+		"spiegazione": "L'apparato digerente umano non possiede l'enzima specifico cellulasi capace di scindere i legami β-glicosidici della cellulosa.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale polisaccaride costituisce l'esoscheletro di insetti e crostacei?",
+		"a": "Glicogeno",
+		"b": "Amido",
+		"c": "Chitina",
+		"d": "Cellulosa",
+		"e": "Maltosio",
+		"risposta_corretta": "c",
+		"spiegazione": "La chitina è l'omopolimero che forma l'esoscheletro di insetti e crostacei e la parete cellulare di alcuni funghi.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa si libera per ogni legame glicosidico che si forma durante la sintesi di un disaccaride?",
+		"a": "Una molecola di anidride carbonica.",
+		"b": "Un atomo di elio.",
+		"c": "Una molecola di acqua.",
+		"d": "Un gruppo amminico libero.",
+		"e": "Energia solare pura.",
+		"risposta_corretta": "c",
+		"spiegazione": "La formazione di un legame glicosidico è una reazione di condensazione che porta alla liberazione di una molecola d'acqua.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è lo zucchero più usato dagli organismi viventi come fonte immediata di energia?",
+		"a": "D-galattosio",
+		"b": "Saccarosio",
+		"c": "D-glucosio",
+		"d": "Amido",
+		"e": "Lattosio",
+		"risposta_corretta": "c",
+		"spiegazione": "Il D-glucosio è lo zucchero più utilizzato dagli esseri viventi come fonte di energia e circola liberamente nei liquidi corporei.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale funzione svolgono le glicoproteine sulla superficie dei globuli rossi?",
+		"a": "Trasporto dell'ossigeno ai tessuti.",
+		"b": "Segnali di riconoscimento (determinazione dei gruppi sanguigni).",
+		"c": "Riserva di energia per il movimento del sangue.",
+		"d": "Produzione di anticorpi contro i virus.",
+		"e": "Ciclizzazione del glucosio ematico.",
+		"risposta_corretta": "b",
+		"spiegazione": "Le glicoproteine di superficie fungono da segnali di riconoscimento e determinano la classificazione nei gruppi sanguigni (A, B, AB, 0).",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale monosaccaride a cinque atomi di carbonio entra nella costituzione dell'RNA?",
+		"a": "2-desossiribosio",
+		"b": "D-glucosio",
+		"c": "D-ribosio",
+		"d": "D-fruttosio",
+		"e": "Glicerolo",
+		"risposta_corretta": "c",
+		"spiegazione": "Il D-ribosio è un aldopentoso che entra nella costituzione delle molecole di RNA.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale tra i seguenti è un esempio di eteropolisaccaride?",
+		"a": "Amido",
+		"b": "Glicogeno",
+		"c": "Cellulosa",
+		"d": "Glucosamminoglicani",
+		"e": "Maltosio",
+		"risposta_corretta": "d",
+		"spiegazione": "I glucosamminoglicani sono citati come esempi di glucidi con funzione strutturale (eteropolisaccaridi), a differenza di amido e cellulosa che sono omopolisaccaridi.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come vengono definiti i carboidrati semplici come monosaccaridi e disaccaridi in ambito nutrizionale?",
+		"a": "Fibre alimentari",
+		"b": "Zuccheri",
+		"c": "Macromolecole complesse",
+		"d": "Glicoconiugati ramificati",
+		"e": "Polimeri strutturali",
+		"risposta_corretta": "b",
+		"spiegazione": "Dal punto di vista nutrizionale, i carboidrati semplici (monosaccaridi e oligosaccaridi) vengono chiamati zuccheri.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è l'enzima la cui carenza causa l'accumulo di lattosio indigerito nell'intestino?",
+		"a": "Amilasi",
+		"b": "Lattasi",
+		"c": "Cellulasi",
+		"d": "Lipasi",
+		"e": "Peptidasi",
+		"risposta_corretta": "b",
+		"spiegazione": "L'intolleranza al lattosio è dovuta a un deficit di lattasi, l'enzima che normalmente scinde il lattosio in glucosio e galattosio.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è l'unione dei monosaccaridi nel lattosio?",
+		"a": "Glucosio + Glucosio",
+		"b": "Glucosio + Fruttosio",
+		"c": "Galattosio + Glucosio",
+		"d": "Ribosio + Glucosio",
+		"e": "Glucosio + Saccarosio",
+		"risposta_corretta": "c",
+		"spiegazione": "Il lattosio è un disaccaride formato dall'unione di una molecola di galattosio e una di glucosio.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale proprietà fisica della cellulosa permette il sostegno delle piante?",
+		"a": "La sua elevata solubilità in acqua.",
+		"b": "La capacità di formare fibre resistenti alla trazione tramite legami a idrogeno.",
+		"c": "Il fatto di essere un polisaccaride di riserva energetica rapida.",
+		"d": "La presenza di ramificazioni ogni 10 unità.",
+		"e": "La neutralizzazione del pH del suolo.",
+		"risposta_corretta": "b",
+		"spiegazione": "Le catene lineari di cellulosa si associano tramite legami a idrogeno formando fibre molto resistenti che sostengono la pianta.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale termine viene utilizzato come sinonimo di carboidrati per indicare la loro composizione di carbonio, idrogeno e ossigeno?",
+		"a": "Lipidi complessi",
+		"b": "Idrati di carbonio",
+		"c": "Polipeptidi ternari",
+		"d": "Acidi nucleici semplici",
+		"e": "Idrocarburi saturi",
+		"risposta_corretta": "b",
+		"spiegazione": "I carboidrati sono chiamati anche 'idrati di carbonio' a causa della loro formula bruta generale.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Secondo la classificazione chimica, un monosaccaride che presenta un gruppo funzionale aldeidico è definito:",
+		"a": "Chetoso",
+		"b": "Aldoso",
+		"c": "Emiacetale",
+		"d": "Piranoso",
+		"e": "Alcol primario",
+		"risposta_corretta": "b",
+		"spiegazione": "I monosaccaridi con un gruppo aldeidico sono chiamati aldosi, mentre quelli con un gruppo chetonico sono detti chetosi.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è l'aldoso più semplice citato nei documenti, caratterizzato da soli tre atomi di carbonio?",
+		"a": "D-glucosio",
+		"b": "Diidrossiacetone",
+		"c": "Gliceraldeide",
+		"d": "D-ribosio",
+		"e": "Saccarosio",
+		"risposta_corretta": "c",
+		"spiegazione": "L'aldoso più semplice è la gliceraldeide (C3H6O3), un trioso.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa determina l'appartenenza di un monosaccaride alla serie D o L nelle proiezioni di Fischer?",
+		"a": "La posizione del gruppo carbonile in cima alla catena.",
+		"b": "La disposizione del gruppo —OH sul centro stereogenico più lontano dal gruppo funzionale.",
+		"c": "Il numero totale di atomi di ossigeno presenti nella molecola.",
+		"d": "La capacità di ruotare la luce polarizzata esclusivamente a destra.",
+		"e": "La presenza di un legame glicosidico di tipo alfa.",
+		"risposta_corretta": "b",
+		"spiegazione": "La serie (D o L) dipende dalla posizione del gruppo ossidrile sull'atomo di carbonio asimmetrico più lontano dal gruppo aldeidico o chetonico.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quanti atomi di carbonio compongono la molecola di 2-desossiribosio, costituente fondamentale del DNA?",
+		"a": "3",
+		"b": "4",
+		"c": "5",
+		"d": "6",
+		"e": "12",
+		"risposta_corretta": "c",
+		"spiegazione": "Il desossiribosio è un aldopentoso, quindi contiene 5 atomi di carbonio.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "In soluzione acquosa, i monosaccaridi con cinque o sei atomi di carbonio si trovano prevalentemente in forma:",
+		"a": "Lineare aperta",
+		"b": "Ciclica",
+		"c": "Gassosa",
+		"d": "Idrolizzata",
+		"e": "Satura",
+		"risposta_corretta": "b",
+		"spiegazione": "In soluzione, i pentosi e gli esosi formano prevalentemente strutture cicliche (emiacetali).",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Come viene chiamato l'atomo di carbonio C-1 del glucosio dopo la ciclizzazione, quando diventa un nuovo centro stereogenico?",
+		"a": "Carbonio chirale secondario",
+		"b": "Carbonio anomerico",
+		"c": "Carbonio carbonilico aperto",
+		"d": "Piranoso",
+		"e": "Alditolo",
+		"risposta_corretta": "b",
+		"spiegazione": "Il carbonio C-1, inizialmente aldeidico, diventa un centro stereogenico dopo la ciclizzazione ed è detto carbonio anomerico.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Gli anomeri α e β di uno zucchero in soluzione acquosa hanno la particolarità di:",
+		"a": "Rimanere separati e non mescolarsi mai.",
+		"b": "Interconvertirsi l'uno nell'altro.",
+		"c": "Avere formule brute differenti tra loro.",
+		"d": "Formare esclusivamente legami ionici.",
+		"e": "Essere presenti solo in assenza di acqua.",
+		"risposta_corretta": "b",
+		"spiegazione": "In acqua le forme α e β si interconvertono l'una nell'altra attraverso la forma aperta.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la definizione corretta di oligosaccaridi riportata nei testi?",
+		"a": "Polimeri di migliaia di unità di glucosio.",
+		"b": "Associazione di pochi monosaccaridi (fino a circa dieci).",
+		"c": "Zuccheri semplici con tre atomi di carbonio.",
+		"d": "Molecole derivanti esclusivamente dalla fotosintesi.",
+		"e": "Lipidi uniti a gruppi fosfato.",
+		"risposta_corretta": "b",
+		"spiegazione": "Gli oligosaccaridi sono formati dall’associazione di pochi monosaccaridi (da due fino a non più di una decina).",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Il legame O-glicosidico che unisce due monosaccaridi è il risultato di una reazione di:",
+		"a": "Idrolisi",
+		"b": "Condensazione",
+		"c": "Ossidazione",
+		"d": "Neutralizzazione",
+		"e": "Saponificazione",
+		"risposta_corretta": "b",
+		"spiegazione": "Il legame glicosidico si forma per condensazione tra l'ossidrile anomerico di un monosaccaride e un ossidrile dell'altro, con perdita di acqua.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Il saccarosio, lo zucchero da tavola, è un disaccaride composto da:",
+		"a": "Glucosio + Galattosio",
+		"b": "Glucosio + Glucosio",
+		"c": "α-D-glucosio + β-D-fruttosio",
+		"d": "Ribosio + Desossiribosio",
+		"e": "Maltosio + Lattosio",
+		"risposta_corretta": "c",
+		"spiegazione": "Il saccarosio è formato dall'unione di una molecola di α-D-glucosio e una di β-D-fruttosio.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale monosaccaride è il principale prodotto della sintesi clorofilliana nelle piante?",
+		"a": "Fruttosio",
+		"b": "Glucosio",
+		"c": "Saccarosio",
+		"d": "Amido",
+		"e": "Galattosio",
+		"risposta_corretta": "b",
+		"spiegazione": "Il glucosio viene sintetizzato dagli organismi autotrofi a partire da acqua e CO2 tramite la fotosintesi.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa deve accadere ai disaccaridi affinché possano essere utilizzati a scopo energetico dall'organismo?",
+		"a": "Devono essere polimerizzati in glicogeno.",
+		"b": "Devono essere scissi nei monosaccaridi costituenti.",
+		"c": "Devono essere trasformati in acidi grassi saturi.",
+		"d": "Devono evaporare tramite la respirazione.",
+		"e": "Vengono eliminati direttamente come fibre.",
+		"risposta_corretta": "b",
+		"spiegazione": "I disaccaridi devono prima essere scissi (separati) nei monosaccaridi che li costituiscono per essere utilizzati.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale funzione biologica principale svolgono l'amido e il glicogeno?",
+		"a": "Funzione strutturale nelle pareti cellulari.",
+		"b": "Riserva energetica.",
+		"c": "Trasmissione dell'informazione genetica.",
+		"d": "Catalisi delle reazioni chimiche.",
+		"e": "Difesa immunitaria.",
+		"risposta_corretta": "b",
+		"spiegazione": "L’amido (vegetale) e il glicogeno (animale) sono i principali carboidrati con funzione di riserva energetica.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "L'amilopectina, componente dell'amido, differisce dall'amilosio perché:",
+		"a": "È formata da galattosio invece che glucosio.",
+		"b": "È costituita da catene ramificate.",
+		"c": "È insolubile mentre l'amilosio è solubile.",
+		"d": "Presenta solo legami beta-glicosidici.",
+		"e": "Contiene azoto e fosforo.",
+		"risposta_corretta": "b",
+		"spiegazione": "Mentre l'amilosio è lineare, l'amilopectina presenta catene ramificate con legami α1,6 nei punti di ramificazione.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Dove viene accumulato principalmente il glicogeno negli organismi animali?",
+		"a": "Nel nucleo delle cellule cerebrali.",
+		"b": "Nel fegato e nei muscoli.",
+		"c": "Esclusivamente nel tessuto adiposo.",
+		"d": "Nella parete delle cellule vegetali.",
+		"e": "Nei semi e nei tuberi.",
+		"risposta_corretta": "b",
+		"spiegazione": "Il glicogeno animale si trova depositato sotto forma di granuli nel citoplasma delle cellule del fegato e del muscolo.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale tipo di legame chimico caratterizza la cellulosa, differenziandola dall'amido?",
+		"a": "Legame peptidico",
+		"b": "Legame α1,4-glicosidico",
+		"c": "Legame β1,4-glicosidico",
+		"d": "Legame a idrogeno tra acidi grassi",
+		"e": "Legame ionico",
+		"risposta_corretta": "c",
+		"spiegazione": "La cellulosa è formata da unità di β-D-glucosio unite da legami β1,4-glicosidici.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "La cellulosa è indigeribile per l'uomo perché:",
+		"a": "Manca l'enzima cellulasi capace di idrolizzare i legami beta.",
+		"b": "Le molecole sono troppo piccole per essere assorbite.",
+		"c": "Contiene sostanze tossiche per il fegato.",
+		"d": "È solubile solo in solventi organici apolari.",
+		"e": "Non contiene glucosio.",
+		"risposta_corretta": "a",
+		"spiegazione": "L'apparato digerente umano non possiede l'enzima cellulasi per idrolizzare i legami β-glicosidici della cellulosa.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale polisaccaride forma l'esoscheletro di insetti e crostacei?",
+		"a": "Amido",
+		"b": "Glicogeno",
+		"c": "Cellulosa",
+		"d": "Chitina",
+		"e": "Maltosio",
+		"risposta_corretta": "d",
+		"spiegazione": "La chitina è l'omopolimero con funzione strutturale che forma l'esoscheletro di insetti e crostacei.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Le macromolecole ibride formate dall'unione di carboidrati e proteine sono dette:",
+		"a": "Glicolipidi",
+		"b": "Glicoproteine",
+		"c": "Polipeptidi ramificati",
+		"d": "Fosfogliceridi",
+		"e": "Isomeri ottici",
+		"risposta_corretta": "b",
+		"spiegazione": "Le glicoproteine sono esempi di glicoconiugati composti da una porzione glicidica e una proteica.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale funzione svolgono i carboidrati di superficie sulla membrana dei globuli rossi?",
+		"a": "Produzione di emoglobina.",
+		"b": "Determinazione dei gruppi sanguigni.",
+		"c": "Trasporto attivo di ossigeno.",
+		"d": "Sintesi di anticorpi nel plasma.",
+		"e": "Degradazione del colesterolo ematico.",
+		"risposta_corretta": "b",
+		"spiegazione": "La diversa natura delle glicoproteine di superficie consente di classificare i globuli rossi nei gruppi sanguigni (A, B, AB, 0).",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è l'energia media contenuta in un solo grammo di glucosio?",
+		"a": "2 kJ",
+		"b": "15,5 kJ",
+		"c": "40 kJ",
+		"d": "100 kJ",
+		"e": "5 kJ",
+		"risposta_corretta": "b",
+		"spiegazione": "Un solo grammo di glucosio contiene 15,5 kJ di energia.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "In nutrizione, come vengono comunemente chiamati i carboidrati semplici (monosaccaridi e oligosaccaridi)?",
+		"a": "Fibre",
+		"b": "Zuccheri",
+		"c": "Glicogeno",
+		"d": "Amidi",
+		"e": "Proteine semplici",
+		"risposta_corretta": "b",
+		"spiegazione": "I carboidrati semplici sono chiamati anche zuccheri, mentre quelli complessi sono i polisaccaridi.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale tra i seguenti zuccheri ha il potere dolcificante più elevato (circa 1,8 rispetto al saccarosio)?",
+		"a": "Lattosio",
+		"b": "Fruttosio",
+		"c": "Glucosio",
+		"d": "Galattosio",
+		"e": "Maltosio",
+		"risposta_corretta": "b",
+		"spiegazione": "Il fruttosio ha un potere dolcificante di 1,8, superiore a quello del saccarosio (posto pari a 1).",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "La carenza di quale enzima intestinale causa disturbi digestivi e meteorismo in seguito all'ingestione di latte?",
+		"a": "Amilasi",
+		"b": "Lattasi",
+		"c": "Cellulasi",
+		"d": "Lipasi",
+		"e": "Pepsina",
+		"risposta_corretta": "b",
+		"spiegazione": "L'intolleranza al lattosio è dovuta a un deficit dell'enzima lattasi.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Quale monosaccaride a cinque atomi di carbonio è un costituente fondamentale dell'RNA?",
+		"a": "D-glucosio",
+		"b": "D-ribosio",
+		"c": "2-desossiribosio",
+		"d": "Gliceraldeide",
+		"e": "Maltosio",
+		"risposta_corretta": "b",
+		"spiegazione": "Il D-ribosio è un aldopentoso che entra nella costituzione dell'acido ribonucleico (RNA).",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è la percentuale approssimativa di carboidrati che compone l'organismo umano secondo la Figura 17.1?",
+		"a": "1%",
+		"b": "13%",
+		"c": "16%",
+		"d": "65%",
+		"e": "5%",
+		"risposta_corretta": "a",
+		"spiegazione": "I carboidrati rappresentano circa l'1% della composizione del corpo umano.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Cosa sono gli enantiomeri nel contesto degli zuccheri?",
+		"a": "Molecole che non contengono atomi di ossigeno.",
+		"b": "Molecole speculari e non sovrapponibili.",
+		"c": "Zuccheri con lo stesso numero di gruppi chetonici.",
+		"d": "Polimeri composti solo da glucosio.",
+		"e": "Disaccaridi presenti esclusivamente nel malto.",
+		"risposta_corretta": "b",
+		"spiegazione": "Gli enantiomeri sono isomeri che sono l'uno l'immagine speculare e non sovrapponibile dell'altro.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Qual è l'effetto dell'acqua calda sui granuli di amido?",
+		"a": "Si sciolgono istantaneamente senza variazioni.",
+		"b": "Si rigonfiano e scoppiano formando una dispersione colloidale.",
+		"c": "Diventano solidi e formano legami peptidici.",
+		"d": "Si trasformano in trigliceridi vegetali.",
+		"e": "Non hanno alcuna reazione.",
+		"risposta_corretta": "b",
+		"spiegazione": "In acqua calda i granuli di amido si rigonfiano e scoppiano dando una dispersione colloidale gelatinosa.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  },
+	  {
+		"domanda": "Perché l'assunzione di cellulosa è comunque importante per l'uomo nonostante sia indigeribile?",
+		"a": "Perché fornisce l'energia necessaria per i muscoli.",
+		"b": "Perché stimola la peristalsi intestinale.",
+		"c": "Perché si trasforma in amido nel fegato.",
+		"d": "Perché permette la sintesi del DNA cellulare.",
+		"e": "Perché abbassa il pH dello stomaco.",
+		"risposta_corretta": "b",
+		"spiegazione": "La cellulosa (fibra) è importante per la sua azione di stimolo sulla peristalsi intestinale.",
+		"area": "BIO_Molecole_Biologiche - dispensa"
+	  }
+    ];
+
+    /* ================================================================
+       STATO DELL'APPLICAZIONE
+       ================================================================ */
+    let categories = [];
+    let selectedFilter = null;
+    let selectedCount = 0;
+    let quizQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let userAnswers = [];
+    let selectedOption = null;
+    let answered = false;
+
+    /* ================================================================
+       FUNZIONI HELPER
+       ================================================================ */
+    function isDispensa(area) {
+        return /dispensa$/i.test(area) || /dispense$/i.test(area);
+    }
+    function isAltreFonti(area) {
+        return /altre fonti$/i.test(area);
+    }
+    function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    // Genera le opzioni mescolate per una domanda (5 alternative: a, b, c, d, e)
+    function getShuffledOptions(q) {
+        const opts = [
+            { key: 'a', text: q.a },
+            { key: 'b', text: q.b },
+            { key: 'c', text: q.c },
+            { key: 'd', text: q.d },
+            { key: 'e', text: q.e }
+        ];
+        return shuffle(opts);
+    }
+
+    // Mappa indice → lettera mostrata (A, B, C, D, E)
+    function keyToLetter(index) {
+        return String.fromCharCode(65 + index);
+    }
+
+    /* ================================================================
+       GENERAZIONE DINAMICA DELLE CATEGORIE
+       ================================================================ */
+    function buildCategories() {
+        const data = window.__QUIZ_DATA__;
+        const cats = [];
+
+        cats.push({
+            label: 'Tutte le domande (' + data.length + ')',
+            filterFn: function() { return true; },
+            count: data.length
+        });
+
+        const compiti = data.filter(function(q) { return q.area === 'compito'; });
+        cats.push({
+            label: 'Compiti (' + compiti.length + ')',
+            filterFn: function(q) { return q.area === 'compito'; },
+            count: compiti.length
+        });
+
+        const dispense = data.filter(function(q) { return isDispensa(q.area); });
+        cats.push({
+            label: 'Dispense (' + dispense.length + ')',
+            filterFn: function(q) { return isDispensa(q.area); },
+            count: dispense.length
+        });
+
+        const altre = data.filter(function(q) { return isAltreFonti(q.area); });
+        cats.push({
+            label: 'Altre fonti (' + altre.length + ')',
+            filterFn: function(q) { return isAltreFonti(q.area); },
+            count: altre.length
+        });
+
+        const dispAlt = data.filter(function(q) { return isDispensa(q.area) || isAltreFonti(q.area); });
+        cats.push({
+            label: 'Dispense + Altre fonti (' + dispAlt.length + ')',
+            filterFn: function(q) { return isDispensa(q.area) || isAltreFonti(q.area); },
+            count: dispAlt.length
+        });
+
+        const topicMap = {};
+        data.forEach(function(q) {
+            const idx = q.area.indexOf(' - ');
+            if (idx > 0) {
+                const topic = q.area.substring(0, idx).trim();
+                if (!topicMap[topic]) topicMap[topic] = 0;
+                topicMap[topic]++;
+            }
+        });
+
+        const topics = Object.keys(topicMap).sort();
+        topics.forEach(function(topic) {
+            cats.push({
+                label: topic + ' (' + topicMap[topic] + ')',
+                filterFn: function(q) { return q.area.startsWith(topic); },
+                count: topicMap[topic]
+            });
+        });
+
+        return cats;
+    }
+
+    /* ================================================================
+       POPOLAMENTO LISTA (SELECT con OPTGROUP)
+       ================================================================ */
+    function populateList() {
+        const sel = document.getElementById('category-select');
+        sel.innerHTML = '';
+
+        const ogFixed = document.createElement('optgroup');
+        ogFixed.label = 'Categorie';
+        for (let i = 0; i < Math.min(5, categories.length); i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = categories[i].label;
+            ogFixed.appendChild(opt);
+        }
+        sel.appendChild(ogFixed);
+
+        if (categories.length > 5) {
+            const ogTopics = document.createElement('optgroup');
+            ogTopics.label = 'Argomenti';
+            for (let i = 5; i < categories.length; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = categories[i].label;
+                ogTopics.appendChild(opt);
+            }
+            sel.appendChild(ogTopics);
+        }
+    }
+
+    /* ================================================================
+       GESTIONE SETUP
+       ================================================================ */
+    function onCategoryChange() {
+        const idx = parseInt(document.getElementById('category-select').value);
+        if (isNaN(idx) || !categories[idx]) return;
+        const cat = categories[idx];
+        selectedFilter = cat.filterFn;
+        selectedCount = cat.count;
+
+        const numInput = document.getElementById('num-questions');
+        const hint = document.getElementById('num-hint');
+        const startBtn = document.getElementById('start-btn');
+
+        numInput.max = selectedCount;
+        numInput.min = 1;
+        hint.textContent = 'Disponibili: ' + selectedCount + ' domande';
+
+        if (parseInt(numInput.value) > selectedCount) {
+            numInput.value = selectedCount;
+        }
+        if (parseInt(numInput.value) < 1) {
+            numInput.value = 1;
+        }
+        startBtn.disabled = (selectedCount === 0);
+    }
+
+    /* ================================================================
+       AVVIO DEL QUIZ
+       ================================================================ */
+    function startQuiz() {
+        const num = parseInt(document.getElementById('num-questions').value);
+        const count = Math.min(Math.max(num, 1), selectedCount);
+
+        const filtered = window.__QUIZ_DATA__.filter(selectedFilter);
+        quizQuestions = shuffle(filtered).slice(0, count);
+
+        currentIndex = 0;
+        score = 0;
+        userAnswers = [];
+
+        switchScreen('quiz-screen');
+        renderQuestion();
+    }
+
+    /* ================================================================
+       RENDERING DOMANDA
+       ================================================================ */
+    function renderQuestion() {
+        answered = false;
+        selectedOption = null;
+
+        const q = quizQuestions[currentIndex];
+        const total = quizQuestions.length;
+        const shuffled = getShuffledOptions(q);
+
+        document.getElementById('q-counter').textContent = 'Domanda ' + (currentIndex + 1) + ' di ' + total;
+        document.getElementById('q-score').textContent = 'Punteggio: ' + score + '/' + currentIndex;
+
+        const pct = ((currentIndex) / total) * 100;
+        document.getElementById('progress-fill').style.width = pct + '%';
+
+        document.getElementById('q-area-badge').textContent = q.area;
+        document.getElementById('q-text').textContent = q.domanda;
+
+        const optContainer = document.getElementById('q-options');
+        optContainer.innerHTML = '';
+        shuffled.forEach(function(opt, i) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.setAttribute('role', 'radio');
+            btn.setAttribute('aria-checked', 'false');
+            btn.dataset.key = opt.key;
+            btn.innerHTML =
+                '<span class="opt-letter">' + keyToLetter(i) + '</span>' +
+                '<span>' + opt.text + '</span>';
+            btn.addEventListener('click', function() { selectOption(btn, opt.key); });
+            optContainer.appendChild(btn);
+        });
+
+        document.getElementById('feedback-container').style.display = 'none';
+        document.getElementById('feedback-container').innerHTML = '';
+        document.getElementById('submit-btn').style.display = '';
+        document.getElementById('submit-btn').disabled = true;
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    /* ================================================================
+       SELEZIONE OPZIONE
+       ================================================================ */
+    function selectOption(btn, key) {
+        if (answered) return;
+        selectedOption = key;
+
+        const allBtns = document.querySelectorAll('#q-options .option-btn');
+        allBtns.forEach(function(b) {
+            b.classList.remove('selected');
+            b.setAttribute('aria-checked', 'false');
+        });
+        btn.classList.add('selected');
+        btn.setAttribute('aria-checked', 'true');
+
+        document.getElementById('submit-btn').disabled = false;
+    }
+
+    /* ================================================================
+       CONFERMA RISPOSTA
+       ================================================================ */
+    function submitAnswer() {
+        if (answered || selectedOption === null) return;
+        answered = true;
+
+        const q = quizQuestions[currentIndex];
+        const isCorrect = selectedOption === q.risposta_corretta;
+        if (isCorrect) score++;
+
+        // Salva la risposta per il riepilogo
+        const shuffledOpts = [];
+        document.querySelectorAll('#q-options .option-btn').forEach(function(b) {
+            shuffledOpts.push({
+                key: b.dataset.key,
+                text: b.querySelector('span:last-child').textContent
+            });
+        });
+        userAnswers.push({
+            selectedKey: selectedOption,
+            correctKey: q.risposta_corretta,
+            isCorrect: isCorrect,
+            question: q,
+            shuffledOptions: shuffledOpts
+        });
+
+        // Blocca tutte le opzioni e applica stili
+        const allBtns = document.querySelectorAll('#q-options .option-btn');
+        allBtns.forEach(function(b) {
+            b.classList.add('locked');
+            const k = b.dataset.key;
+            if (k === q.risposta_corretta) {
+                b.classList.add('correct-answer');
+            } else if (k === selectedOption && !isCorrect) {
+                b.classList.add('wrong-selected');
+            } else {
+                b.classList.add('dimmed');
+            }
+        });
+
+        // Aggiorna punteggio visibile
+        document.getElementById('q-score').textContent = 'Punteggio: ' + score + '/' + (currentIndex + 1);
+
+        // Mostra feedback
+        var fc = document.getElementById('feedback-container');
+        fc.style.display = 'block';
+        var feedbackClass = isCorrect ? 'correct' : 'wrong';
+        var feedbackIcon = isCorrect ? 'fa-circle-check' : 'fa-circle-xmark';
+        var feedbackLabel = isCorrect ? 'Risposta corretta' : 'Risposta errata';
+        fc.innerHTML =
+            '<div class="feedback-box ' + feedbackClass + '">' +
+                '<div class="feedback-title"><i class="fa-solid ' + feedbackIcon + '"></i> ' + feedbackLabel + '</div>' +
+                '<div class="spiegazione-box">' +
+                    '<div class="spiegazione-label">Spiegazione</div>' +
+                    q.spiegazione +
+                '</div>' +
+            '</div>';
+
+        // Nascondi conferma, mostra avanti
+        document.getElementById('submit-btn').style.display = 'none';
+        var nextBtn = document.getElementById('next-btn');
+        nextBtn.style.display = '';
+        if (currentIndex < quizQuestions.length - 1) {
+            nextBtn.innerHTML = 'Prossima <i class="fa-solid fa-arrow-right" style="margin-left:0.35rem;"></i>';
+        } else {
+            nextBtn.innerHTML = '<i class="fa-solid fa-trophy" style="margin-right:0.35rem;"></i> Vedi risultati';
+        }
+
+        // Scroll per far vedere il feedback su smartphone
+        setTimeout(function() {
+            fc.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    }
+
+    /* ================================================================
+       DOMANDA SUCCESSIVA
+       ================================================================ */
+    function nextQuestion() {
+        currentIndex++;
+        if (currentIndex >= quizQuestions.length) {
+            showResults();
+        } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderQuestion();
+        }
+    }
+
+    /* ================================================================
+       VISUALIZZAZIONE RISULTATI
+       ================================================================ */
+    function showResults() {
+        switchScreen('results-screen');
+
+        var total = quizQuestions.length;
+        var pct = Math.round((score / total) * 100);
+
+        // Anello punteggio
+        var circumference = 2 * Math.PI * 52;
+        var offset = circumference - (circumference * pct / 100);
+        var arc = document.getElementById('score-arc');
+        arc.style.strokeDashoffset = circumference;
+        setTimeout(function() {
+            arc.style.strokeDashoffset = offset;
+        }, 50);
+
+        document.getElementById('score-pct').textContent = pct + '%';
+        document.getElementById('score-fraction').textContent = score + '/' + total;
+
+        // Colore dell'arco in base al punteggio
+        if (pct >= 80) {
+            arc.setAttribute('stroke', 'var(--correct)');
+        } else if (pct >= 50) {
+            arc.setAttribute('stroke', 'var(--accent)');
+        } else {
+            arc.setAttribute('stroke', 'var(--wrong)');
+        }
+
+        // Messaggio
+        var msg = '';
+        if (pct === 100) {
+            msg = 'Perfetto! Hai risposto correttamente a tutte le domande.';
+        } else if (pct >= 80) {
+            msg = 'Ottimo risultato! Pochi errori, continua così.';
+        } else if (pct >= 60) {
+            msg = 'Buon lavoro, ma c\'è ancora margine di miglioramento.';
+        } else if (pct >= 40) {
+            msg = 'Risultato insufficiente. Ti consiglio di rivedere gli argomenti.';
+        } else {
+            msg = 'Risultato basso. Ripassa la dispensa e riprova.';
+        }
+        document.getElementById('result-message').textContent = msg;
+
+        // Riepilogo risposte
+        var reviewList = document.getElementById('review-list');
+        reviewList.innerHTML = '';
+        userAnswers.forEach(function(ans, idx) {
+            var div = document.createElement('div');
+            div.className = 'review-item ' + (ans.isCorrect ? 'was-correct' : 'was-wrong');
+
+            // Icona stato
+            var statusClass = ans.isCorrect ? 'is-correct' : 'is-wrong';
+            var statusIcon = ans.isCorrect ? 'fa-circle-check' : 'fa-circle-xmark';
+            var statusText = ans.isCorrect ? 'Corretta' : 'Errata';
+
+            var html = '<div class="review-status-icon ' + statusClass + '">';
+            html += '<i class="fa-solid ' + statusIcon + '"></i> ' + statusText;
+            html += '</div>';
+
+            // Testo della domanda
+            html += '<div class="review-q-text">' + (idx + 1) + '. ' + ans.question.domanda + '</div>';
+
+            // Lista delle opzioni come le ha viste l'utente
+            ans.shuffledOptions.forEach(function(opt, optIdx) {
+                var rowClass = 'review-opt-row';
+                if (opt.key === ans.correctKey) {
+                    rowClass += ' rev-correct';
+                } else if (opt.key === ans.selectedKey && !ans.isCorrect) {
+                    rowClass += ' rev-wrong';
+                }
+                html += '<div class="' + rowClass + '">';
+                html += '<span class="review-opt-letter">' + keyToLetter(optIdx) + '</span>';
+                html += '<span>' + opt.text + '</span>';
+                html += '</div>';
+            });
+
+            div.innerHTML = html;
+            reviewList.appendChild(div);
+        });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ================================================================
+       NAVIGAZIONE SCHERMATE
+       ================================================================ */
+    function switchScreen(id) {
+        document.querySelectorAll('.screen').forEach(function(s) {
+            s.classList.remove('active');
+        });
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    /* ================================================================
+       INIZIALIZZAZIONE
+       ================================================================ */
+    function init() {
+        categories = buildCategories();
+        populateList();
+        onCategoryChange();
+
+        document.getElementById('category-select').addEventListener('change', onCategoryChange);
+        document.getElementById('num-questions').addEventListener('input', function() {
+            var v = parseInt(this.value);
+            if (v > selectedCount) this.value = selectedCount;
+            if (v < 1 && this.value !== '') this.value = 1;
+        });
+        document.getElementById('start-btn').addEventListener('click', startQuiz);
+        document.getElementById('submit-btn').addEventListener('click', submitAnswer);
+        document.getElementById('next-btn').addEventListener('click', nextQuestion);
+        document.getElementById('retry-btn').addEventListener('click', function() {
+            startQuiz();
+        });
+        document.getElementById('new-session-btn').addEventListener('click', function() {
+            switchScreen('setup-screen');
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    </script>
+</body>
+</html>
